@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dizione-ptbr"
+version = "0.0.1"
+description = "Brazilian Portuguese (pt-BR, not European Portuguese) text to phonemes: dictionary, rules, no GPL. Front end for small open TTS models."
+keywords = ["pt-BR", "brazilian-portuguese", "g2p", "phonemizer", "tts"]
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "SemFence" }, { name = "Gustavo Toledo" }]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dizione_ptbr = ["data/*"]
