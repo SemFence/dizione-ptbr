@@ -1,7 +1,7 @@
 import os, sys, unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from dizione_ptbr import ID, SYMBOLS, normalize, number_to_words, phonemize, phonemize_word, pronounce
+from dizione_ptbr import ID, SYMBOLS, VERSION, identity, normalize, number_to_words, phonemize, phonemize_word, pieces, pronounce
 
 
 def plain(word):
@@ -104,6 +104,22 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(SYMBOLS[:5], ("<pad>", "<bos>", "<eos>", "<sp>", "<unk>"))
         self.assertEqual(SYMBOLS[5:8], (",", ".", "?"))
         self.assertEqual(len(SYMBOLS), 55)
+
+
+class FrontEndInterfaceTests(unittest.TestCase):
+    def test_pieces_are_punctuation_or_words_with_stress(self):
+        result = pieces("Oi, tudo bem?")
+        self.assertEqual([is_punctuation for is_punctuation, _ in result], [False, True, False, True])
+        self.assertEqual(result[1], (True, ","))
+        self.assertEqual(result[0][1], [[("o", 1), ("j", 0)]])
+        self.assertEqual([len(word) for word in result[2][1]], [4, 3])      # "tudo" and "bem"
+        self.assertEqual(pieces("😀"), [])                                         # nothing to say, nothing returned
+
+    def test_identity_names_the_build(self):
+        first, second = identity(), identity()
+        self.assertEqual(first, second)
+        self.assertEqual((first["name"], first["version"]), ("dizione-ptbr", VERSION))
+        self.assertEqual(len(first["fingerprint"]), 64)
 
 
 if __name__ == "__main__":

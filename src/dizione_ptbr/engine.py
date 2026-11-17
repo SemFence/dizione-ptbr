@@ -16,6 +16,8 @@ from .g2p import phonemize_word
 from .normalize import normalize
 from .symbols import BOS, EOS, ID, PHONES, PUNCTUATION, SP, SYMBOLS, UNK
 
+VERSION = 1   # bump whenever the phonemes produced for the same text change
+
 # Clitic function words are unstressed in running speech even when they are one syllable.
 FUNCTION_WORDS = frozenset(
     "o a os as um uma uns umas e de da do das dos em no na nos nas ao aos à às por pelo pela pelos pelas com sem "
@@ -38,9 +40,10 @@ def lexicon() -> dict[str, list[tuple[str, int]]]:
         _LEXICON = {}
         path = os.path.join(os.path.dirname(__file__), "data", "lexicon.tsv")
         if os.path.exists(path):
-            for line in open(path, encoding="utf-8"):
-                w, _, p = line.rstrip("\n").partition("\t")
-                _LEXICON[w] = [(t.lstrip("ˈ"), 1 if t.startswith("ˈ") else 0) for t in p.split()]
+            with open(path, encoding="utf-8") as lexicon:
+                for line in lexicon:
+                    w, _, p = line.rstrip("\n").partition("\t")
+                    _LEXICON[w] = [(t.lstrip("ˈ"), 1 if t.startswith("ˈ") else 0) for t in p.split()]
     return _LEXICON
 
 
@@ -82,11 +85,47 @@ class Phonemes:
         return " ".join(("ˈ" if st else "") + s for s, st in zip(self.symbols, self.stress))
 
 
-def phonemize(text: str, use_lexicon: bool = True, do_normalize: bool = True) -> Phonemes:
-    """Whole text to symbols. Words are separated by <sp>; punctuation is kept as its own symbol."""
+def _clean(text: str, do_normalize: bool = True) -> str:
     t = normalize(text) if do_normalize else text
     for a, b in _PUNCT_MAP.items():
         t = t.replace(a, b)
+    return t
+
+
+def pieces(text: str, use_lexicon: bool = True) -> list[tuple[bool, object]]:
+    """The interface tiny-voca's "own" front end expects: ``(is_punctuation, value)`` items, where the value of a
+    text piece is a list of words and each word a list of ``(phone, stress)``."""
+    out: list[tuple[bool, object]] = []
+    words: list[list[tuple[str, int]]] = []
+    for m in _TOKEN.finditer(_clean(text)):
+        tok = m.group(0)
+        if tok.isspace():
+            continue
+        if re.match(r"[a-záàâãéêíóôõúüç]", tok, re.I):
+            words.append(pronounce(tok, use_lexicon))
+        elif tok in PUNCTUATION:
+            if words:
+                out.append((False, words)); words = []
+            out.append((True, tok))
+    if words:
+        out.append((False, words))
+    return out
+
+
+def identity() -> dict:
+    """Fingerprint of everything that decides the output (code, lexicon, table, symbols)."""
+    import hashlib
+    here = os.path.dirname(__file__)
+    h = hashlib.sha256()
+    for rel in ("data/lexicon.tsv", "data/open_table.json", "g2p.py", "normalize.py", "engine.py", "symbols.py"):
+        with open(os.path.join(here, rel), "rb") as f:
+            h.update(rel.encode()); h.update(f.read())
+    return {"name": "dizione-ptbr", "version": VERSION, "fingerprint": h.hexdigest()}
+
+
+def phonemize(text: str, use_lexicon: bool = True, do_normalize: bool = True) -> Phonemes:
+    """Whole text to symbols. Words are separated by <sp>; punctuation is kept as its own symbol."""
+    t = _clean(text, do_normalize)
     out = Phonemes()
     out.add(BOS)
     pending_space = False

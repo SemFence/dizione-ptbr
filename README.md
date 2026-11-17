@@ -63,11 +63,17 @@ These numbers use the dictionary as the reference, and the dictionary has its ow
 unstressed "a" is sometimes `a` and sometimes `ɐ`, and some entries look like errors). Read them as a
 lower bound of how well it matches careful pronunciation, not as human-rated quality.
 
+## For TTS front ends
+
+`pieces(text)` returns the normalized text as pieces (punctuation as itself, words as lists of `(phone, stress)`) and
+`identity()` a fingerprint of everything that decides the output (code, lexicon, open/close table and symbols, next to `VERSION`), so a model can record
+which front end made its tokens. `phonemize(text)` is the plain version with `<bos>`, `<sp>` and `<eos>`.
+
 ## Phone set
 
 The symbols of the MFA dictionary: `a b d dʒ e ẽ f i ĩ j j̃ k l m n o õ p s t tʃ u ũ v w w̃ x z ɐ ɐ̃ ɔ ɛ ɡ ɲ ɾ ʃ ʎ ʒ`.
 Two of them (`j̃`, `w̃`) are not labels of the `wav2vec2-lv-60-espeak-cv-ft` aligner that tiny-voca uses to time
-phonemes, so the alignment step will need a small mapping for them (not written yet). The symbol table is
+phonemes, so [tiny-voca-ptbr](https://github.com/SemFence/tiny-voca-ptbr) aligns them as `j` and `w`. The symbol table is
 **append-only** (`symbols.py`): changing the order breaks every model trained with it.
 
 ## Known limits
@@ -77,7 +83,7 @@ phonemes, so the alignment step will need a small mapping for them (not written 
 - Dialect: standard Brazilian Portuguese with palatalized "t"/"d" before "i", final "l" as `w` and "r" as `x`
   at the end of a syllable. Carioca "s" (`ʃ`) and r-dropping are not modeled.
 - Text normalization covers common cases only. Telephone numbers, URLs, roman numerals and units are not handled.
-- Python only for now. A JavaScript port (for in-browser demos) is planned and must give identical output.
+- Python here. A TypeScript port with identical output (for in-browser demos) is in [dizione-ptbr-js](https://github.com/SemFence/dizione-ptbr-js).
 
 ## Rebuilding the data
 
