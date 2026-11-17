@@ -122,5 +122,24 @@ class FrontEndInterfaceTests(unittest.TestCase):
         self.assertEqual(len(first["fingerprint"]), 64)
 
 
+class AcronymAndLoanwordTests(unittest.TestCase):
+    def test_capital_acronyms_are_spelled(self):
+        self.assertEqual(" ".join(phonemize("GPU").symbols[1:-1]), "ʒ e p e u")
+        self.assertEqual(" ".join(phonemize("USB").symbols[1:-1]), "u ɛ s i b e")
+        self.assertEqual(" ".join(phonemize("WebGPU").symbols[1:-1]), "u ɛ b i ʒ e p e u")
+        self.assertEqual(" ".join(phonemize("GPUs").symbols[1:-1]), "ʒ e p e u s")
+
+    def test_some_acronyms_are_words_and_shouted_words_stay_words(self):
+        self.assertEqual(" ".join(phonemize("PIX").symbols[1:-1]), "p i ʃ")
+        self.assertEqual(" ".join(phonemize("VOCÊ").symbols[1:-1]), "v o s e")
+
+    def test_common_english_words_are_read_the_brazilian_way(self):
+        self.assertEqual(" ".join(phonemize("megabytes").symbols[1:-1]), "m e ɡ a b a j tʃ i s")
+        self.assertEqual(" ".join(phonemize("download").symbols[1:-1]), "d ɐ̃ w l o w dʒ i")
+        self.assertEqual(" ".join(phonemize("Mac").symbols[1:-1]), "m ɛ k")                  # "mék", not "maque"
+        self.assertEqual(" ".join(phonemize("ONNX").symbols[1:-1]), "ɔ e n i e n i ʃ i s")   # ONNX is spelled: ó-êni-êni-xis
+        self.assertEqual(" ".join(phonemize("Goiânia, Goiás").symbols[1:-1]), "ɡ o j ɐ̃ n j ɐ , <sp> ɡ o j a s")
+
+
 if __name__ == "__main__":
     unittest.main()

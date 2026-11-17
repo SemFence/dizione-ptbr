@@ -8,7 +8,7 @@ version = "0.0.1"
 description = "Brazilian Portuguese (pt-BR, not European Portuguese) text to phonemes: dictionary, rules, no GPL. Front end for small open TTS models."
 keywords = ["pt-BR", "brazilian-portuguese", "g2p", "phonemizer", "tts"]
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = { text = "Apache-2.0 AND CC-BY-4.0" }   # code: Apache-2.0; lexicon.tsv: CC BY 4.0 (MFA dictionary, changed)
 authors = [{ name = "SemFence" }, { name = "Gustavo Toledo" }]
 dependencies = []
 

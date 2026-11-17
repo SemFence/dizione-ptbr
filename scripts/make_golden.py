@@ -9,6 +9,8 @@ root = Path(__file__).resolve().parents[1]
 corpus = Path.home() / "Projects/fun/ptbr-voz-dataset/frases/corpus.jsonl"
 sentences = [json.loads(l)["text"] for l in open(corpus, encoding="utf-8")]
 edge = [
+    "A GPU e a CPU no WebGPU", "Meu e-mail e o Wi-Fi", "USB, PDF, ONNX, IA, TI e TV", "O PIX da ONU tá OK",
+    "VOCÊ VIU ISSO?", "SemFence no YouTube e no WhatsApp", "download de 18 megabytes no iPhone", "GPUs e APIs",
     "Oi, tudo bem? Paguei R$ 15,50 às 10h30.", "Dr. Silva chegou às 21 horas.", "Dra. Ana e o Sr. João, vc viu?",
     "RH, CPF e PSG são siglas.", "Eram 1.234.567 pessoas, 3,14% e 1º lugar, 2ª vez, 21ª aula.", "Nasceu em 05/03/1990 e 1/1/24.",
     "Faltam 2 horas e 1 hora; 101 casas, 200 coisas, 1000 vezes, 2000 semanas.", "R$ 1,00 e R$ 0,50 e R$ 1.000.000,00",
