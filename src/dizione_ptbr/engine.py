@@ -16,7 +16,7 @@ from .g2p import phonemize_word
 from .normalize import normalize
 from .symbols import BOS, EOS, ID, PHONES, PUNCTUATION, SP, SYMBOLS, UNK
 
-VERSION = 1   # bump whenever the phonemes produced for the same text change
+VERSION = 1   # bump when the symbols or the shape of the output change (models record it); lexicon fixes keep it
 
 # Clitic function words are unstressed in running speech even when they are one syllable.
 FUNCTION_WORDS = frozenset(
@@ -25,8 +25,15 @@ FUNCTION_WORDS = frozenset(
 # Letter names, to spell acronyms that have no vowel (RH, CPF, PSG).
 LETTER_NAMES = {
     "a": "a", "b": "bê", "c": "cê", "d": "dê", "e": "é", "f": "éfi", "g": "gê", "h": "agá", "i": "i", "j": "jota",
-    "k": "cá", "l": "éli", "m": "ême", "n": "êni", "o": "ó", "p": "pê", "q": "quê", "r": "érri", "s": "ési",
+    "k": "cá", "l": "éli", "m": "ême", "n": "êni", "o": "ó", "p": "pê", "q": "quê", "r": "érri", "s": "ésse",
     "t": "tê", "u": "u", "v": "vê", "w": "dáblio", "x": "xis", "y": "ípsilon", "z": "zê"}
+# Siglas em maiúsculas (2 a 5 letras) são soletradas: GPU, CPU, USB. As de SPELLED são soletradas mesmo sendo
+# também uma palavra do léxico (IA, TI); as de AS_WORD são lidas como palavra (PIX, ONU, NASA).
+SPELLED = frozenset("ia ti tv pc rg ui ux ai ue eua".split())
+AS_WORD = frozenset(
+    "onu otan nasa fifa unesco unicef pix enem sus cep detran ibama inmetro sebrae senai sesc sesi usp unicamp "
+    "embrapa anatel anvisa aneel inpe opep ok".split())
+_CAPS_RUNS = re.compile(r"[A-Z]{2,}(?![a-z])|[A-Z]?[a-z]+|[A-Z]")
 _LEXICON: dict[str, list[tuple[str, int]]] | None = None
 _PHONE_SET = set(PHONES)
 _TOKEN = re.compile(r"[a-záàâãéêíóôõúüç]+(?:-[a-záàâãéêíóôõúüç]+)*|[,.;:?!…—\"'()]|\s+|\S", re.I)
@@ -47,16 +54,34 @@ def lexicon() -> dict[str, list[tuple[str, int]]]:
     return _LEXICON
 
 
+def _spell(w: str, use_lexicon: bool) -> list[tuple[str, int]]:
+    """Letter names in a row. Only the last one is stressed (GPU = jê-pê-ˈu): stressing every letter makes the
+    acronym come out slow, one beat per letter, with the last sound far from the others."""
+    out = []
+    for c in w:
+        out += pronounce(LETTER_NAMES.get(c, c), use_lexicon)
+    last = max((i for i, (_, st) in enumerate(out) if st), default=-1)
+    return [(p, 1 if i == last else 0) for i, (p, _) in enumerate(out)]
+
+
 def pronounce(word: str, use_lexicon: bool = True) -> list[tuple[str, int]]:
-    w = unicodedata.normalize("NFC", word.lower())
+    word = unicodedata.normalize("NFC", word)
+    w = word.lower()
     lex = lexicon() if use_lexicon else {}
+    if word.isascii() and word.isalpha() and word.isupper() and 2 <= len(word) <= 5 and w not in AS_WORD \
+            and (w in SPELLED or w not in lex):
+        return _spell(w, use_lexicon)
+    if re.fullmatch(r"[A-Z]{2,5}s", word) and word[:-1].lower() not in AS_WORD:
+        return _spell(w[:-1], use_lexicon) + [("s", 0)]   # GPUs, APIs: plural of a spelled acronym
+    if w not in lex and word.isascii() and word.isalpha() and re.search(r"[A-Z]{2}", word) and re.search(r"[a-z]", word):
+        out = []                                   # WebGPU -> Web + GPU
+        for part in _CAPS_RUNS.findall(word):
+            out += pronounce(part, use_lexicon)
+        return out
     if w in lex:
         return [(p, 0) for p, _ in lex[w]] if w in FUNCTION_WORDS else lex[w]
     if not re.search(r"[aeiouáàâãéêíóôõú]", w) and len(w) > 1 and w.isalpha():
-        out = []
-        for c in w:
-            out += pronounce(LETTER_NAMES.get(c, c), use_lexicon)
-        return out
+        return _spell(w, use_lexicon)
     if "-" in w:
         out = []
         for part in filter(None, w.split("-")):

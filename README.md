@@ -99,7 +99,8 @@ python -m unittest discover -s tests
 
 - **Code**: Apache-2.0.
 - **Lexicon** (`src/dizione_ptbr/data/lexicon.tsv`): CC BY 4.0, derived from the MFA Brazilian Portuguese dictionary by
-  Michael McAuliffe and Morgan Sonderegger. See `src/dizione_ptbr/data/LICENSE.mfa-dictionary.md`.
+  Michael McAuliffe and Morgan Sonderegger, **with changes** (one pronunciation per word, stress marks, and the
+  Brazilian respellings of English words and names in `data/loanwords.tsv`). See `src/dizione_ptbr/data/LICENSE.mfa-dictionary.md`.
 
 If you use this package, please credit **SemFence (Gustavo Toledo)** and the MFA dictionary.
 
